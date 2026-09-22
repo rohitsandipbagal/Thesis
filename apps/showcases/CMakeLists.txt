@@ -17,6 +17,8 @@ if ( WALBERLA_BUILD_WITH_CODEGEN)
    if( WALBERLA_BUILD_LEGACY_LBM )
       add_subdirectory( Antidunes )
       add_subdirectory( FlowAroundSphere )
+      add_subdirectory(AcousticSphere)
+      
    endif()
    
    if (WALBERLA_BUILD_WITH_PYTHON AND WALBERLA_BUILD_LEGACY_LBM)

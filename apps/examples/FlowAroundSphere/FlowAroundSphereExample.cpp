@@ -75,7 +75,16 @@ namespace FlowAroundSphere
         const real_t refLen = domainAABB.xSize()*0.1;
         const real_t viscosity = vel_inflow * refLen / reynoldsNumber;
         real_t omega = lbm::collision_model::omegaFromViscosity(viscosity);
+                // ============================================================
+        // READ ACOUSTIC SOURCE PARAMETERS FROM .prm FILE  ← NEW: Acoustic Source
+        // ============================================================
+        Config::BlockHandle acousticParams = config->getBlock("AcousticSource");
+        const real_t amplitude = acousticParams.getParameter< real_t >("Amplitude", 0.001);
+        const real_t frequency = acousticParams.getParameter< real_t >("Frequency", 0.1);
 
+        WALBERLA_LOG_INFO_ON_ROOT("Acoustic Source: Amplitude = " << amplitude << ", Frequency = " << frequency)
+        
+        
         // Initialize macroscopic fields and PDF field
         FlowAroundSphereExample::gen::IntializeMacroFields initFields{rho, u, vel_inflow};
         FlowAroundSphereExample::gen::LBM::InitPdfs lbInit{pdfs, rho, u};
@@ -129,6 +138,12 @@ namespace FlowAroundSphere
         auto inflow = FlowAroundSphereExample::gen::UBBFactory{ blocks, pdfs, vel_inflow }.fromLinks(inflowLinks);
         auto outflow = FlowAroundSphereExample::gen::OutflowFactory{ blocks, pdfs }.fromLinks(outflowLinks);
         
+        // ============================================================
+        // ACOUSTIC SOURCE SWEEP  ← NEW: Acoustic Source
+        // ============================================================
+        // This creates the acoustic source sweep that was generated from the .py file
+        // The source term is: j_i = w_i * Q₀ * sin(ω·t)
+        auto acousticSource = FlowAroundSphereExample::gen::AcousticSource{amplitude, frequency};
         //  Timeloop
         const uint_t numTimesteps{simParams.getParameter<uint_t>("timesteps")};
         SweepTimeloop loop{blocks->getBlockStorage(), numTimesteps};
@@ -138,7 +153,7 @@ namespace FlowAroundSphere
         loop.add() << Sweep(inflow);
         loop.add() << Sweep(outflow);
         loop.add() << Sweep(qbb);
-
+        loop.add() << Sweep(acousticSource);  // ← NEW: Add acoustic source to timeloop
 
         RemainingTimeLogger logger{numTimesteps};
         loop.addFuncAfterTimeStep(logger);

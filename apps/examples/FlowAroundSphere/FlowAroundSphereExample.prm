@@ -7,7 +7,7 @@ DomainSetup
 
 Parameters
 {
-    re          100;
+    re          20;       
     u_max       0.05;
     timesteps   2001;
 }
@@ -15,4 +15,8 @@ Parameters
 Output
 {
     vtkWriteFrequency   100;
+}
+AcousticSource {
+    Amplitude = 0.001;
+    Frequency = 0.1;
 }
